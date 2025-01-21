@@ -170,5 +170,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# MacOS
+.DS_Store
+
 # Hugging Face Inference API token
-.token.txt
+.hf_token.txt
+
+# PicoVoice Access key
+.pico_access_key.txt
