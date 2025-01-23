@@ -178,3 +178,6 @@ cython_debug/
 
 # PicoVoice Access key
 .pico_access_key.txt
+
+# PyCharm
+.idea/
