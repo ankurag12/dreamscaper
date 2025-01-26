@@ -62,7 +62,7 @@ class Dreamer:
         logger.info(f"Image saved as {save_as}")
 
     def imagine(self):
-        """This generates prompt for a new dream using combination of random object-subject"""
+        """This generates prompt for a new dream using combination of random subject-activity"""
         dream = " ".join([random.choice(self._dream_prompts["adjectives"]),
                           random.choice(self._dream_prompts["subjects"]),
                           random.choice(self._dream_prompts["actions"])])
