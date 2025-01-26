@@ -45,11 +45,13 @@ class Dreamer:
 
         image = None
         for quality, client in self._clients.items():
-            logger.info(f"Trying model {client}")
+            logger.info(f"Pinging HF.\nModel: {client}\nPrompt: {text}")
             try:
                 image = self._clients[quality].text_to_image(text)
             except Exception as e:
                 logger.error(f"{e} raised while trying to use {client}; will try a different model")
+                continue
+            break
 
         if not image:
             logger.error(f"Image could not be generated")
@@ -58,8 +60,10 @@ class Dreamer:
         if not save_as:
             save_as = os.path.join("dreams", f"{text[:256]}.jpeg")
 
+        os.makedirs(os.path.dirname(save_as), exist_ok=True)
         image.save(save_as)
         logger.info(f"Image saved as {save_as}")
+        return save_as
 
     def imagine(self):
         """This generates prompt for a new dream using combination of random subject-activity"""

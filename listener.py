@@ -5,6 +5,7 @@ import pvcheetah
 import pvporcupine
 from pvrecorder import PvRecorder
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -45,11 +46,10 @@ class Listener:
                 if keyword_index >= 0:
                     logger.info(f"[{datetime.now()}] Detected {self._wake_keywords[keyword_index]}")
                     self._porcupine_recorder.stop()
-                    self.listen_for_dream()
-                    return self.listen_for_wake()
+                    return self._wake_keywords[keyword_index]
 
         except Exception as e:
-            print(e)
+            logger.error(e)
             self._porcupine_recorder.delete()
 
     def listen_for_dream(self):
@@ -57,26 +57,31 @@ class Listener:
         logger.info("Listening for dream...")
 
         is_endpoint = False
-        dream = str()
 
         try:
             while not is_endpoint:
-                pcm = self._porcupine_recorder.read()
+                pcm = self._cheetah_recorder.read()
                 partial_transcript, is_endpoint = self._cheetah.process(pcm)
-                dream += partial_transcript
+                if not partial_transcript:
+                    continue
+                yield partial_transcript
 
-            dream += self._cheetah.flush()
             self._cheetah_recorder.stop()
+            yield self._cheetah.flush()
 
         except Exception as e:
             logger.error(e)
-            self._porcupine_recorder.delete()
-
-        return dream
+            self._cheetah_recorder.delete()
 
     def shutdown(self):
+        if self._porcupine_recorder.is_recording:
+            self._porcupine_recorder.stop()
         self._porcupine_recorder.delete()
+
+        if self._cheetah_recorder.is_recording:
+            self._cheetah_recorder.stop()
         self._cheetah_recorder.delete()
+        
         self._porcupine.delete()
         self._cheetah.delete()
 
