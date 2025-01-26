@@ -2,33 +2,24 @@ from datetime import datetime
 
 import pvcheetah
 import pvporcupine
-from huggingface_hub import InferenceClient
 from pvrecorder import PvRecorder
 
 keywords = ['picovoice', 'bumblebee']
 
 
-def read_pico_access_key():
-    with open(".pico_access_key.txt", "r") as f:
-        access_key = f.read()
-    return access_key
+class Listener:
+    def __init__(self):
+        self._pico_access_key = self._read_pico_access_key()
 
+    @staticmethod
+    def _read_pico_access_key():
+        with open(".pico_access_key.txt", "r") as f:
+            access_key = f.read()
+        return access_key
 
-def read_hf_token():
-    with open(".hf_token.txt", "r") as f:
-        token = f.read()
-    return token
+    def run(self):
+        pass
 
-
-pico_access_key = read_pico_access_key()
-hf_token = read_hf_token()
-
-clients = {
-    "Speed": InferenceClient("stabilityai/stable-diffusion-3.5-large-turbo", token=hf_token),
-    "Balance": InferenceClient("stabilityai/stable-diffusion-3.5-large", token=hf_token),
-    "Realistic": InferenceClient("black-forest-labs/FLUX.1-dev", token=hf_token),
-    "Backup": InferenceClient("stable-diffusion-v1-5/stable-diffusion-v1-5", token=hf_token)
-}
 
 porcupine = pvporcupine.create(
     access_key=pico_access_key,
@@ -65,7 +56,7 @@ try:
             # Call image generator
             print(f"NEW DREAM: {dream}")
             print("Painting dream...")
-            image = clients["Balance"].text_to_image(dream)
+
             image.show()
 
 except KeyboardInterrupt:

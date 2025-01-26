@@ -1,0 +1,9 @@
+Dog
+Cat
+Car
+Bus
+Moon
+Sun
+Road
+Building
+Mountains

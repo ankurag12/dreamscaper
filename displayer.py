@@ -38,6 +38,11 @@ class Displayer:
         self._screen.blit(text, text_rect)
 
     def show_loading(self, text=""):
+        """This is displayed while waiting for image to be generated"""
+        pass
+
+    def show_listening(self):
+        """This is displayed as soon as the wake phrase is heard. It shows the voice prompt in real-time"""
         pass
 
     def run(self):
@@ -72,5 +77,5 @@ class Displayer:
 
 
 if __name__ == "__main__":
-    displayer = Displayer()
-    displayer.run()
+    with Displayer() as displayer:
+        displayer.run()

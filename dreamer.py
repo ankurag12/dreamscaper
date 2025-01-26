@@ -1,0 +1,69 @@
+import glob
+import logging
+import os.path
+import random
+from collections import OrderedDict
+
+from huggingface_hub import InferenceClient
+
+logger = logging.getLogger(__name__)
+
+
+class Dreamer:
+
+    def __init__(self):
+        hf_token = self._read_hf_token()
+
+        self._clients = OrderedDict({
+            "Speed": InferenceClient("stabilityai/stable-diffusion-3.5-large-turbo", token=hf_token),
+            "Balance": InferenceClient("stabilityai/stable-diffusion-3.5-large", token=hf_token),
+            "Realistic": InferenceClient("black-forest-labs/FLUX.1-dev", token=hf_token),
+            "Backup": InferenceClient("stable-diffusion-v1-5/stable-diffusion-v1-5", token=hf_token)
+        })
+
+        self._dream_prompts = self._read_dream_prompts()
+
+    @staticmethod
+    def _read_hf_token():
+        with open(".hf_token.txt", "r") as f:
+            token = f.read()
+        return token
+
+    @staticmethod
+    def _read_dream_prompts():
+        files = glob.glob(os.path.join("prompts", "**", "*.txt"), recursive=True)
+        dream_prompts = dict()
+        for file in files:
+            with open(file, "r") as f:
+                dream_prompts[os.path.splitext(os.path.basename(file))[0]] = f.read().splitlines()
+        return dream_prompts
+
+    def visualize(self, text, quality=None, save_as=None):
+        # If quality is provided, give preference to that in the order of clients
+        if quality:
+            self._clients.move_to_end(quality, last=False)
+
+        image = None
+        for quality, client in self._clients.items():
+            logger.info(f"Trying model {client}")
+            try:
+                image = self._clients[quality].text_to_image(text)
+            except Exception as e:
+                logger.error(f"{e} raised while trying to use {client}; will try a different model")
+
+        if not image:
+            logger.error(f"Image could not be generated")
+            return
+
+        if not save_as:
+            save_as = os.path.join("dreams", f"{text[:256]}.jpeg")
+
+        image.save(save_as)
+        logger.info(f"Image saved as {save_as}")
+
+    def imagine(self):
+        """This generates prompt for a new dream using combination of random object-subject"""
+        dream = " ".join([random.choice(self._dream_prompts["adjectives"]),
+                          random.choice(self._dream_prompts["subjects"]),
+                          random.choice(self._dream_prompts["actions"])])
+        return dream
