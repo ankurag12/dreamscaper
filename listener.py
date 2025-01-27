@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 import pvcheetah
 import pvporcupine
@@ -44,12 +43,13 @@ class Listener:
 
                 # Wake phrase detected
                 if keyword_index >= 0:
-                    logger.info(f"[{datetime.now()}] Detected {self._wake_keywords[keyword_index]}")
+                    logger.info(f" Detected {self._wake_keywords[keyword_index]}")
                     self._porcupine_recorder.stop()
                     return self._wake_keywords[keyword_index]
 
         except Exception as e:
             logger.error(e)
+            self._porcupine_recorder.stop()
             self._porcupine_recorder.delete()
 
     def listen_for_dream(self):
@@ -71,6 +71,7 @@ class Listener:
 
         except Exception as e:
             logger.error(e)
+            self._cheetah_recorder.stop()
             self._cheetah_recorder.delete()
 
     def shutdown(self):
@@ -81,7 +82,7 @@ class Listener:
         if self._cheetah_recorder.is_recording:
             self._cheetah_recorder.stop()
         self._cheetah_recorder.delete()
-        
+
         self._porcupine.delete()
         self._cheetah.delete()
 

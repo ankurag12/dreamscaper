@@ -1,5 +1,3 @@
-import sys
-
 import pygame
 
 
@@ -61,7 +59,7 @@ class Displayer:
             pygame.display.flip()
             clock.tick(60)
 
-        self.shutdown()
+        pygame.quit()
 
     def clear_screen(self, color=None):
         if not color:
@@ -76,8 +74,8 @@ class Displayer:
     @staticmethod
     def shutdown():
         # Quit Pygame
+        # This can be called multiple times as repeated calls have no effect
         pygame.quit()
-        sys.exit()
 
     def __enter__(self):
         return self
