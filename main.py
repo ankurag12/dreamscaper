@@ -22,17 +22,24 @@ class Dreamscaper:
         self._displayer_lock = threading.Lock()
         self._last_image_ts = 0
         self._last_image_ts_lock = threading.Lock()
+        self._last_image = "assets/logo.jpeg"
 
-    def on_demand_dream(self):
+    def on_demand_dream(self, timeout=5):
         while True:
             self._listener.listen_for_wake()  # This is a blocking call
 
             with self._displayer_lock:
                 self._displayer.show_listening()
                 dream_text = str()
-                for part in self._listener.listen_for_dream():
+
+                for part in self._listener.listen_for_dream(timeout=timeout):
                     dream_text += part
                     self._displayer.show_text(dream_text)
+
+                if not dream_text:
+                    self._displayer.show_image(self._last_image)
+                    continue
+
                 self._displayer.show_loading()
                 # For better user experience of on-demand dream, choose a model that offers better speed
                 dream_img = self._dreamer.visualize(dream_text, quality="Speed")
@@ -40,6 +47,7 @@ class Dreamscaper:
 
             with self._last_image_ts_lock:
                 self._last_image_ts = time.time()
+                self._last_image = dream_img
 
     def periodic_dream(self, period=30):
         while True:
@@ -49,6 +57,7 @@ class Dreamscaper:
 
             # If there's a new on-demand dream displayed, we want to reset timer for period.
             # Hence, this complication instead of a simple time.sleep(period)
+            # TODO: We also don't want to display an image in if on-demand mode
             while True:
                 with self._last_image_ts_lock:
                     dt = time.time() - self._last_image_ts
@@ -60,7 +69,9 @@ class Dreamscaper:
             with self._displayer_lock:
                 self._displayer.show_image(dream_img)
 
-            self._last_image_ts = time.time()
+            with self._last_image_ts_lock:
+                self._last_image_ts = time.time()
+                self._last_image = dream_img
 
     def run(self):
         self._displayer.show_startup()

@@ -1,4 +1,5 @@
 import logging
+import time
 
 import pvcheetah
 import pvporcupine
@@ -52,16 +53,22 @@ class Listener:
             self._porcupine_recorder.stop()
             self._porcupine_recorder.delete()
 
-    def listen_for_dream(self):
+    def listen_for_dream(self, timeout=5):
         self._cheetah_recorder.start()
         logger.info("Listening for dream...")
 
         is_endpoint = False
-
+        t0 = time.time()
+        cumulative_transcript = str()
         try:
             while not is_endpoint:
                 pcm = self._cheetah_recorder.read()
                 partial_transcript, is_endpoint = self._cheetah.process(pcm)
+                cumulative_transcript += partial_transcript
+
+                # We don't want it to be stuck here if no prompt is received
+                if not cumulative_transcript and time.time() - t0 > timeout:
+                    break
                 if not partial_transcript:
                     continue
                 yield partial_transcript
