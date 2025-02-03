@@ -38,7 +38,7 @@ class Listener:
         logger.info("Listening for wake phrase...")
 
         try:
-            while True:
+            while self._porcupine_recorder.is_recording:
                 pcm = self._porcupine_recorder.read()
                 keyword_index = self._porcupine.process(pcm)
 

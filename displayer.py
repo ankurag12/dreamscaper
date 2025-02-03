@@ -1,4 +1,9 @@
+import logging
+import os
+
 import pygame
+
+logger = logging.getLogger(__name__)
 
 
 class Displayer:
@@ -17,6 +22,10 @@ class Displayer:
     def show_image(self, image_path="assets/logo.jpeg", size=None):
         if size is None:
             size = (self._screen.get_width(), self._screen.get_height())
+
+        if not image_path or not os.path.exists(image_path):
+            logger.error(f"Could not locate image at {image_path}")
+            return
 
         # Load an image
         image = pygame.image.load(image_path)
