@@ -37,25 +37,28 @@ class Dreamscaper:
                 self._displayer.show_listening()
                 dream_text = str()
 
-                for part in self._listener.listen_for_dream(timeout=timeout):
-                    dream_text += part
-                    self._displayer.show_text(dream_text)
+                for dream_text in self._listener.listen_for_dream(timeout=timeout):
+                    print(f"dream_text = {dream_text}")
+                    self._displayer.show_dream_prompt(dream_text)
+
+                self._displayer.stop_show_listening()
 
                 # No prompt was heard
                 if not dream_text:
                     self._displayer.show_image(self._last_image)
                     continue
 
+                time.sleep(3)
                 self._displayer.show_loading()
                 # For better user experience of on-demand dream, choose a model that offers better speed
-                dream_img = self._dreamer.visualize(dream_text, quality="Speed")
-                self._displayer.show_image(dream_img)
+            #     dream_img = self._dreamer.visualize(dream_text, quality="Speed")
+            #     self._displayer.show_image(dream_img)
+            #
+            # with self._last_image_lock:
+            #     self._last_image_ts = time.time()
+            #     self._last_image = dream_img
 
-            with self._last_image_lock:
-                self._last_image_ts = time.time()
-                self._last_image = dream_img
-
-    def periodic_dream(self, period=3600):
+    def periodic_dream(self, period=36000000):
         while True:
             dream_text = self._dreamer.imagine()
             # For periodic dreams, we can afford to use models that offer high quality at the cost of more time
@@ -85,8 +88,8 @@ class Dreamscaper:
         listener_thread = threading.Thread(target=self.on_demand_dream, daemon=True)
         listener_thread.start()
 
-        dreamer_thread = threading.Thread(target=self.periodic_dream, daemon=True)
-        dreamer_thread.start()
+        # dreamer_thread = threading.Thread(target=self.periodic_dream, daemon=True)
+        # dreamer_thread.start()
 
         try:
             self._displayer.run()  # This has to be part of main thread

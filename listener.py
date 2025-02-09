@@ -51,7 +51,6 @@ class Listener:
         except Exception as e:
             logger.error(e)
             self._porcupine_recorder.stop()
-            self._porcupine_recorder.delete()
 
     def listen_for_dream(self, timeout=5):
         self._cheetah_recorder.start()
@@ -61,25 +60,31 @@ class Listener:
         t0 = time.time()
         cumulative_transcript = str()
         try:
-            while not is_endpoint:
+            while not is_endpoint and self._cheetah_recorder.is_recording:
                 pcm = self._cheetah_recorder.read()
                 partial_transcript, is_endpoint = self._cheetah.process(pcm)
                 cumulative_transcript += partial_transcript
-
                 # We don't want it to be stuck here if no prompt is received
                 if not cumulative_transcript and time.time() - t0 > timeout:
                     break
+
                 if not partial_transcript:
                     continue
-                yield partial_transcript
 
-            self._cheetah_recorder.stop()
-            yield self._cheetah.flush()
+                logger.debug(f"cumulative_transcript = {cumulative_transcript}")
+
+                yield cumulative_transcript
+
+            if self._cheetah_recorder.is_recording:
+                self._cheetah_recorder.stop()
+            cumulative_transcript += self._cheetah.flush()
+            logger.debug(f"cumulative_transcript = {cumulative_transcript}")
+
+            yield cumulative_transcript
 
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error raised while listening for dream: {e}")
             self._cheetah_recorder.stop()
-            self._cheetah_recorder.delete()
 
     def shutdown(self):
         if self._porcupine_recorder.is_recording:
