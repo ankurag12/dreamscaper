@@ -78,6 +78,9 @@ class Displayer:
                 ret.append(v)
         return tuple(ret)
 
+    def get_screen_size(self):
+        return self._screen.get_width(), self._screen.get_height()
+    
     def show_image(self, image_path="assets/logo.jpeg", size=None, center=None):
         if not image_path or not os.path.exists(image_path):
             logger.error(f"Could not locate image at {image_path}")

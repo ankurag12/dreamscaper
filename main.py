@@ -23,6 +23,14 @@ class Dreamscaper:
         self._last_image_ts = 0
         self._last_image_lock = threading.Lock()
         self._last_image = "assets/logo.jpeg"
+        self._image_size = self.get_image_size()
+
+    def get_image_size(self):
+        # Image size has to be such that the aspect ratio is maintained but the height is at default 1024
+        screen_size = self._displayer.get_screen_size()
+        aspect_ratio = screen_size[0] / screen_size[1]
+        width = int(1024 * aspect_ratio / 8) * 8
+        return width, 1024
 
     def on_demand_dream(self, quality="Speed", timeout=5):
         while True:
@@ -51,7 +59,10 @@ class Dreamscaper:
 
                 self._displayer.show_loading()
                 # For better user experience of on-demand dream, choose a model that offers better speed
-                dream_img = self._dreamer.visualize(dream_text, quality=quality)
+                dream_img = self._dreamer.visualize(dream_text,
+                                                    quality=quality,
+                                                    width=self._image_size[0],
+                                                    height=self._image_size[1])
 
                 self._displayer.stop_show_loading()
                 self._displayer.show_image(dream_img)

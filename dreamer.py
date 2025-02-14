@@ -38,7 +38,7 @@ class Dreamer:
                 dream_prompts[os.path.splitext(os.path.basename(file))[0]] = f.read().splitlines()
         return dream_prompts
 
-    def visualize(self, text, quality=None, save_as=None):
+    def visualize(self, text, quality=None, save_as=None, height=1024, width=1024):
         # If quality is provided, give preference to that in the order of clients
         if quality:
             self._clients.move_to_end(quality, last=False)
@@ -47,7 +47,7 @@ class Dreamer:
         for quality, client in self._clients.items():
             logger.info(f"Pinging HF.\nModel: {client}\nPrompt: {text}")
             try:
-                image = self._clients[quality].text_to_image(text)
+                image = self._clients[quality].text_to_image(text, height=height, width=width)
             except Exception as e:
                 logger.error(f"{e} raised while trying to use {client}; will try a different model")
                 continue
