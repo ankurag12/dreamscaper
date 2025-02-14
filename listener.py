@@ -22,7 +22,7 @@ class Listener:
 
         self._cheetah = pvcheetah.create(
             access_key=pico_access_key,
-            endpoint_duration_sec=2)
+            endpoint_duration_sec=3)
 
         self._porcupine_recorder = PvRecorder(frame_length=self._porcupine.frame_length)
         self._cheetah_recorder = PvRecorder(frame_length=self._cheetah.frame_length)

@@ -60,6 +60,15 @@ class Displayer:
             "center": (self._screen.get_width() // 2, 2 * self._screen.get_height() // 3)
         }
 
+        self._loading_anim_props = {
+            "sprite_sheet_path": "assets/loading_spritesheet.png",
+            "animation_id": "loading",
+            "num_frames": 900,
+            "fps": 50,
+            "size": (512, 512),  # TODO Make it scale by screen size
+            "center": (self._screen.get_width() // 2, 2 * self._screen.get_height() // 3)
+        }
+
     def _get_defaults(self, **kwargs):
         ret = []
         for k, v in kwargs.items():
@@ -130,14 +139,16 @@ class Displayer:
                 time.sleep(0.0001)
             frame_index += 1
 
-    def show_loading(self, dream_text=""):
+    def show_loading(self):
         """This is displayed while waiting for image to be generated"""
-        # TODO: Make into animation
-        self.show_image("assets/loading.png")
+        thread = threading.Thread(target=self._show_animation,
+                                  kwargs=self._loading_anim_props,
+                                  daemon=True)
+        self._all_threads.append(thread)
+        thread.start()
 
     def show_listening(self):
         """This is displayed as soon as the wake phrase is heard. It shows the voice prompt in real-time"""
-        self.clear_screen()
         thread = threading.Thread(target=self._show_animation,
                                   kwargs=self._mic_anim_props,
                                   daemon=True)
@@ -146,6 +157,9 @@ class Displayer:
 
     def stop_show_listening(self):
         self._running_animations["listening"].clear()
+
+    def stop_show_loading(self):
+        self._running_animations["loading"].clear()
 
     def show_dream_prompt(self, dream_text):
         with self._screen_lock:

@@ -24,7 +24,7 @@ class Dreamscaper:
         self._last_image_lock = threading.Lock()
         self._last_image = "assets/logo.jpeg"
 
-    def on_demand_dream(self, timeout=5):
+    def on_demand_dream(self, quality="Speed", timeout=5):
         while True:
             wake_word = self._listener.listen_for_wake()  # This is a blocking call
 
@@ -34,6 +34,7 @@ class Dreamscaper:
                 break
 
             with self._displayer_lock:
+                self._displayer.clear_screen()
                 self._displayer.show_listening()
                 dream_text = str()
 
@@ -48,21 +49,22 @@ class Dreamscaper:
                     self._displayer.show_image(self._last_image)
                     continue
 
-                time.sleep(3)
                 self._displayer.show_loading()
                 # For better user experience of on-demand dream, choose a model that offers better speed
-            #     dream_img = self._dreamer.visualize(dream_text, quality="Speed")
-            #     self._displayer.show_image(dream_img)
-            #
-            # with self._last_image_lock:
-            #     self._last_image_ts = time.time()
-            #     self._last_image = dream_img
+                dream_img = self._dreamer.visualize(dream_text, quality=quality)
 
-    def periodic_dream(self, period=36000000):
+                self._displayer.stop_show_loading()
+                self._displayer.show_image(dream_img)
+
+            with self._last_image_lock:
+                self._last_image_ts = time.time()
+                self._last_image = dream_img
+
+    def periodic_dream(self, quality="Realistic", period=86400):
         while True:
             dream_text = self._dreamer.imagine()
             # For periodic dreams, we can afford to use models that offer high quality at the cost of more time
-            dream_img = self._dreamer.visualize(dream_text, quality="Speed")
+            dream_img = self._dreamer.visualize(dream_text, quality=quality)
 
             # If there's a new on-demand dream displayed, we want to reset timer for period.
             # Hence, this complication instead of a simple time.sleep(period)
@@ -85,11 +87,15 @@ class Dreamscaper:
     def run(self):
         self._displayer.show_startup()
 
-        listener_thread = threading.Thread(target=self.on_demand_dream, daemon=True)
+        listener_thread = threading.Thread(target=self.on_demand_dream,
+                                           kwargs={"quality": "Speed", "timeout": 5},
+                                           daemon=True)
         listener_thread.start()
 
-        # dreamer_thread = threading.Thread(target=self.periodic_dream, daemon=True)
-        # dreamer_thread.start()
+        dreamer_thread = threading.Thread(target=self.periodic_dream,
+                                          kwargs={"quality": "Realistic", "period": 86400},
+                                          daemon=True)
+        dreamer_thread.start()
 
         try:
             self._displayer.run()  # This has to be part of main thread
