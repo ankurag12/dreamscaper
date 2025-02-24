@@ -26,7 +26,7 @@ class Dreamer:
     @staticmethod
     def _read_hf_token():
         with open(".hf_token.txt", "r") as f:
-            token = f.read()
+            token = f.read().strip()
         return token
 
     @staticmethod
