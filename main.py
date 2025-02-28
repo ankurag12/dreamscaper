@@ -1,4 +1,5 @@
 import logging
+import sys
 import threading
 import time
 
@@ -47,7 +48,7 @@ class Dreamscaper:
                 dream_text = str()
                 time.sleep(5)
                 # for dream_text in self._listener.listen_for_dream(timeout=timeout):
-                dream_text = "Horses flying in the sky"
+                dream_text = sys.argv[1]
                 print(f"dream_text = {dream_text}")
                 self._displayer.show_dream_prompt(dream_text)
 
@@ -59,6 +60,7 @@ class Dreamscaper:
                     continue
 
                 self._displayer.show_loading()
+                time.sleep(5)
                 # For better user experience of on-demand dream, choose a model that offers better speed
                 dream_img = self._dreamer.visualize(dream_text,
                                                     quality=quality,
