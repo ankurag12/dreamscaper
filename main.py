@@ -6,7 +6,6 @@ import coloredlogs
 
 from displayer import Displayer
 from dreamer import Dreamer
-from listener import Listener
 
 coloredlogs.install(fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s')
 
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Dreamscaper:
     def __init__(self):
         self._dreamer = Dreamer()
-        self._listener = Listener()
+        # self._listener = Listener()
         self._displayer = Displayer()
         self._app_running = threading.Event()
         self._displayer_lock = threading.Lock()
@@ -34,21 +33,23 @@ class Dreamscaper:
 
     def on_demand_dream(self, quality="Speed", timeout=5):
         while True:
-            wake_word = self._listener.listen_for_wake()  # This is a blocking call
+            # wake_word = self._listener.listen_for_wake()  # This is a blocking call
 
+            time.sleep(5)
             # listen_for_wake was terminated
-            if wake_word is None:
-                logger.info(f"Terminating on-demand dream thread as listen_for_wake was terminated")
-                break
+            # if wake_word is None:
+            #     logger.info(f"Terminating on-demand dream thread as listen_for_wake was terminated")
+            #     break
 
             with self._displayer_lock:
                 self._displayer.clear_screen()
                 self._displayer.show_listening()
                 dream_text = str()
-
-                for dream_text in self._listener.listen_for_dream(timeout=timeout):
-                    print(f"dream_text = {dream_text}")
-                    self._displayer.show_dream_prompt(dream_text)
+                time.sleep(5)
+                # for dream_text in self._listener.listen_for_dream(timeout=timeout):
+                dream_text = "Horses flying in the sky"
+                print(f"dream_text = {dream_text}")
+                self._displayer.show_dream_prompt(dream_text)
 
                 self._displayer.stop_show_listening()
 
@@ -115,7 +116,7 @@ class Dreamscaper:
             logger.error(e)
 
         finally:
-            self._listener.shutdown()
+            # self._listener.shutdown()
             self._displayer.shutdown()
 
 
