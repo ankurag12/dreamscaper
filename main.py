@@ -29,7 +29,7 @@ class Dreamscaper:
         # Image size has to be such that the aspect ratio is maintained but the height is at default 1024
         screen_size = self._displayer.get_screen_size()
         aspect_ratio = screen_size[0] / screen_size[1]
-        width = int(1024 * aspect_ratio / 8) * 8
+        width = int(1024 * aspect_ratio / 16) * 16
         return width, 1024
 
     def on_demand_dream(self, quality="Speed", timeout=5):
