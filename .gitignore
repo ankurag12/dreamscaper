@@ -179,6 +179,9 @@ cython_debug/
 # PicoVoice Access key
 .pico_access_key.txt
 
+# Google Cloud API access key
+.google-api-key.json
+
 # PyCharm
 .idea/
 
