@@ -2,6 +2,7 @@ import logging
 import threading
 import time
 from enum import Enum, auto
+
 import coloredlogs
 
 from displayer import Displayer
@@ -12,14 +13,16 @@ coloredlogs.install(fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(messa
 
 logger = logging.getLogger(__name__)
 
+
 class State(Enum):
     STARTUP = auto()
     LISTENING = auto()
     LOADING = auto()
     IMAGE = auto()
 
+
 class Dreamscaper:
-    
+
     def __init__(self):
         self._dreamer = Dreamer()
         self._listener = Listener()
@@ -85,7 +88,6 @@ class Dreamscaper:
 
             self.set_last_image_ts(time.time(), dream_img)
 
-
     def periodic_dream(self, quality="Realistic", period=86400):
         while True:
             dream_text = self._dreamer.imagine()
@@ -94,7 +96,8 @@ class Dreamscaper:
 
             # Don't want to display an image if in on-demand mode
             # or if the last image was displayed less than `period` seconds ago
-            while (self.get_state() in (State.LISTENING, State.LOADING)) or (time.time() - self.get_last_image_ts() < period):
+            while (self.get_state() in (State.LISTENING, State.LOADING)) or (
+                    time.time() - self.get_last_image_ts() < period):
                 time.sleep(1)
 
             with self._displayer_lock:
@@ -102,7 +105,6 @@ class Dreamscaper:
                 self.set_state(State.IMAGE)
 
             self.set_last_image_ts(time.time(), dream_img)
-            
 
     def set_state(self, state):
         with self._state_lock:
@@ -112,14 +114,14 @@ class Dreamscaper:
     def get_state(self):
         with self._state_lock:
             return self._state
-        
-    def set_last_image_ts(self, ts, image):    
+
+    def set_last_image_ts(self, ts, image):
         with self._last_image_lock:
             self._last_image_ts = ts
             self._last_image = image
         logger.info(f"Last image was {image}\nDisplayed at {ts}")
 
-    def get_last_image_ts(self):    
+    def get_last_image_ts(self):
         with self._last_image_lock:
             return self._last_image_ts
 

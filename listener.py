@@ -1,21 +1,23 @@
 import logging
-import queue
 import os
-from google.cloud import speech
-from pvrecorder import PvRecorder
-import pyaudio
-import pvporcupine
+import queue
 from contextlib import contextmanager
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 
-# Used in the context manager to disable ALSA errors
-c_error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)(lambda filename, line, function, err, fmt: None)
+import pvporcupine
+import pyaudio
+from google.cloud import speech
+from pvrecorder import PvRecorder
 
+# Used in the context manager to disable ALSA errors
+c_error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)(
+    lambda filename, line, function, err, fmt: None)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# This class is straight up taken from Google's example 
+
+# This class is straight up taken from Google's example
 # https://cloud.google.com/speech-to-text/docs/samples/speech-transcribe-streaming-mic?hl=en#speech_transcribe_streaming_mic-python
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -41,7 +43,7 @@ class MicrophoneStream:
         # Disable ALSA errors
         with self.noalsaerr():
             self._audio_interface = pyaudio.PyAudio()
-        
+
         self._audio_stream = self._audio_interface.open(
             format=pyaudio.paInt16,
             # The API currently only supports 1-channel (mono) audio
@@ -61,10 +63,10 @@ class MicrophoneStream:
         return self
 
     def __exit__(
-        self: object,
-        type: object,
-        value: object,
-        traceback: object,
+            self: object,
+            type: object,
+            value: object,
+            traceback: object,
     ) -> None:
         """Closes the stream, regardless of whether the connection was lost or not."""
         self._audio_stream.stop_stream()
@@ -76,11 +78,11 @@ class MicrophoneStream:
         self._audio_interface.terminate()
 
     def _fill_buffer(
-        self: object,
-        in_data: object,
-        frame_count: int,
-        time_info: object,
-        status_flags: object,
+            self: object,
+            in_data: object,
+            frame_count: int,
+            time_info: object,
+            status_flags: object,
     ) -> object:
         """Continuously collect data from the audio stream, into the buffer.
 
@@ -126,6 +128,7 @@ class MicrophoneStream:
 
             yield b"".join(data)
 
+
 class Listener:
     _wake_keywords = ['picovoice', 'bumblebee']
 
@@ -140,7 +143,7 @@ class Listener:
         )
 
         self._porcupine_recorder = PvRecorder(frame_length=self._porcupine.frame_length)
-        
+
         # Google Cloud Speech-to-Text for Dream detection
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = ".google-api-key.json"
 
@@ -148,13 +151,13 @@ class Listener:
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code="en-US" ,
+            language_code="en-US",
         )
 
         self._streaming_config = speech.StreamingRecognitionConfig(
-            config=config, 
+            config=config,
             interim_results=True,
-            single_utterance=True   # Not sure about this
+            single_utterance=True  # Not sure about this
         )
 
     @staticmethod
@@ -181,7 +184,7 @@ class Listener:
         except Exception as e:
             logger.error(e)
             self._porcupine_recorder.stop()
-            
+
     def listen_for_dream(self, timeout=5):
         logger.info("Listening for dream...")
         with MicrophoneStream() as stream:
@@ -193,13 +196,13 @@ class Listener:
             )
 
             responses = self._speech_client.streaming_recognize(self._streaming_config, requests)
-    
+
             for response in responses:
                 if not response.results:
-                    if response.speech_event_type==speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
+                    if response.speech_event_type == speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
                         break
                     continue
-                
+
                 # The `results` list is consecutive. For streaming, we only care about
                 # the first result being considered, since once it's `is_final`, it
                 # moves on to considering the next utterance.
@@ -214,7 +217,6 @@ class Listener:
 
                 if result.is_final:
                     break
-
 
     def shutdown(self):
         if self._porcupine_recorder.is_recording:

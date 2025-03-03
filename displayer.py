@@ -8,6 +8,7 @@ import pygame
 
 logger = logging.getLogger(__name__)
 
+
 class Animation:
     def __init__(self, sprite_sheet_path, num_frames, fps, size, center):
         self.sprite_sheet_path = sprite_sheet_path
@@ -31,7 +32,7 @@ class Animation:
                   range(self.num_frames)]
         return frames
 
-    
+
 class Displayer:
     # Define colors
     BLACK = (0, 0, 0)
@@ -75,19 +76,17 @@ class Displayer:
                                             self._dream_text_props["center"][1] + self._dream_text_props[
                                                 "font_size"] // 2)
 
-        self._listening_anim = Animation(sprite_sheet_path="assets/mic_spritesheet.png", 
-                                         num_frames=24, 
-                                         fps=33.33, 
-                                         size=(self._screen.get_height() // 4, self._screen.get_height() // 4), 
+        self._listening_anim = Animation(sprite_sheet_path="assets/mic_spritesheet.png",
+                                         num_frames=24,
+                                         fps=33.33,
+                                         size=(self._screen.get_height() // 4, self._screen.get_height() // 4),
                                          center=(self._screen.get_width() // 2, 2 * self._screen.get_height() // 3))
-        
-        self._loading_anim = Animation(sprite_sheet_path="assets/loading_spritesheet.png", 
-                                       num_frames=58, 
-                                       fps=16, 
-                                       size=(self._screen.get_height() // 4, self._screen.get_height() // 4), 
+
+        self._loading_anim = Animation(sprite_sheet_path="assets/loading_spritesheet.png",
+                                       num_frames=58,
+                                       fps=16,
+                                       size=(self._screen.get_height() // 4, self._screen.get_height() // 4),
                                        center=(self._screen.get_width() // 2, 2 * self._screen.get_height() // 3))
-
-
 
     def _get_defaults(self, **kwargs):
         ret = []
@@ -100,7 +99,7 @@ class Displayer:
 
     def get_screen_size(self):
         return self._screen.get_width(), self._screen.get_height()
-    
+
     def show_image(self, image_path="assets/logo.jpeg", size=None, center=None):
         if not image_path or not os.path.exists(image_path):
             logger.error(f"Could not locate image at {image_path}")
@@ -132,7 +131,6 @@ class Displayer:
         with self._screen_lock:
             self._screen.blit(text, text_rect)
 
-        
     def _show_animation(self, animation, animation_id):
         """Displays animation using frames from a spritesheet"""
 
