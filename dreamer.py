@@ -39,15 +39,17 @@ class Dreamer:
         return dream_prompts
 
     def visualize(self, text, quality=None, save_as=None, height=1024, width=1024):
+        # Make a copy of the clients so that the original order is not disturbed and there's no contention between threads
+        clients = self._clients.copy()
         # If quality is provided, give preference to that in the order of clients
         if quality:
-            self._clients.move_to_end(quality, last=False)
+            clients.move_to_end(quality, last=False)
 
         image = None
-        for quality, client in self._clients.items():
+        for quality, client in clients.items():
             logger.info(f"Pinging HF.\nModel: {client}\nPrompt: {text}")
             try:
-                image = self._clients[quality].text_to_image(text, height=height, width=width)
+                image = clients[quality].text_to_image(text, height=height, width=width)
             except Exception as e:
                 logger.error(f"{e} raised while trying to use {client}; will try a different model")
                 continue

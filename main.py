@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-
+from enum import Enum, auto
 import coloredlogs
 
 from displayer import Displayer
@@ -12,8 +12,14 @@ coloredlogs.install(fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(messa
 
 logger = logging.getLogger(__name__)
 
+class State(Enum):
+    STARTUP = auto()
+    LISTENING = auto()
+    LOADING = auto()
+    IMAGE = auto()
 
 class Dreamscaper:
+    
     def __init__(self):
         self._dreamer = Dreamer()
         self._listener = Listener()
@@ -24,6 +30,9 @@ class Dreamscaper:
         self._last_image_lock = threading.Lock()
         self._last_image = "assets/logo.jpeg"
         self._image_size = self.get_image_size()
+        # State machine
+        self._state = State.STARTUP
+        self._state_lock = threading.Lock()
 
     def get_image_size(self):
         # Image size has to be such that the aspect ratio is maintained but the height is at default 1024
@@ -41,13 +50,16 @@ class Dreamscaper:
                 logger.info(f"Terminating on-demand dream thread as listen_for_wake was terminated")
                 break
 
+            self.set_state(State.LISTENING)
+
             with self._displayer_lock:
                 self._displayer.clear_screen()
                 self._displayer.show_listening()
+
                 dream_text = str()
 
                 for dream_text in self._listener.listen_for_dream(timeout=timeout):
-                    print(f"dream_text = {dream_text}")
+                    logger.info(f"dream_text = {dream_text}")
                     self._displayer.show_dream_prompt(dream_text)
 
                 self._displayer.stop_show_listening()
@@ -55,9 +67,12 @@ class Dreamscaper:
                 # No prompt was heard
                 if not dream_text:
                     self._displayer.show_image(self._last_image)
+                    self.set_state(State.IMAGE)
                     continue
 
                 self._displayer.show_loading()
+                self.set_state(State.LOADING)
+
                 # For better user experience of on-demand dream, choose a model that offers better speed
                 dream_img = self._dreamer.visualize(dream_text,
                                                     quality=quality,
@@ -66,10 +81,10 @@ class Dreamscaper:
 
                 self._displayer.stop_show_loading()
                 self._displayer.show_image(dream_img)
+                self.set_state(State.IMAGE)
 
-            with self._last_image_lock:
-                self._last_image_ts = time.time()
-                self._last_image = dream_img
+            self.set_last_image_ts(time.time(), dream_img)
+
 
     def periodic_dream(self, quality="Realistic", period=86400):
         while True:
@@ -77,23 +92,36 @@ class Dreamscaper:
             # For periodic dreams, we can afford to use models that offer high quality at the cost of more time
             dream_img = self._dreamer.visualize(dream_text, quality=quality)
 
-            # If there's a new on-demand dream displayed, we want to reset timer for period.
-            # Hence, this complication instead of a simple time.sleep(period)
-            # TODO: We also don't want to display an image if in on-demand mode
-            while True:
-                with self._last_image_lock:
-                    dt = time.time() - self._last_image_ts
-                if dt < period:
-                    time.sleep(1)
-                else:
-                    break
+            # Don't want to display an image if in on-demand mode
+            # or if the last image was displayed less than `period` seconds ago
+            while (self.get_state() in (State.LISTENING, State.LOADING)) or (time.time() - self.get_last_image_ts() < period):
+                time.sleep(1)
 
             with self._displayer_lock:
                 self._displayer.show_image(dream_img)
+                self.set_state(State.IMAGE)
 
-            with self._last_image_lock:
-                self._last_image_ts = time.time()
-                self._last_image = dream_img
+            self.set_last_image_ts(time.time(), dream_img)
+            
+
+    def set_state(self, state):
+        with self._state_lock:
+            self._state = state
+        logger.info(f"State set to {state}")
+
+    def get_state(self):
+        with self._state_lock:
+            return self._state
+        
+    def set_last_image_ts(self, ts, image):    
+        with self._last_image_lock:
+            self._last_image_ts = ts
+            self._last_image = image
+        logger.info(f"Last image was {image}\nDisplayed at {ts}")
+
+    def get_last_image_ts(self):    
+        with self._last_image_lock:
+            return self._last_image_ts
 
     def run(self):
         self._displayer.show_startup()

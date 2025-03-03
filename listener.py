@@ -1,11 +1,15 @@
 import logging
-import time
 import queue
 import os
 from google.cloud import speech
 from pvrecorder import PvRecorder
 import pyaudio
 import pvporcupine
+from contextlib import contextmanager
+from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
+
+# Used in the context manager to disable ALSA errors
+c_error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)(lambda filename, line, function, err, fmt: None)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +29,19 @@ class MicrophoneStream:
         self._buff = queue.Queue()
         self.closed = True
 
+    @contextmanager
+    def noalsaerr(self):
+        # This is a workaround to disable ALSA errors
+        asound = cdll.LoadLibrary('libasound.so')
+        asound.snd_lib_error_set_handler(c_error_handler)
+        yield
+        asound.snd_lib_error_set_handler(None)
+
     def __enter__(self: object) -> object:
-        self._audio_interface = pyaudio.PyAudio()
+        # Disable ALSA errors
+        with self.noalsaerr():
+            self._audio_interface = pyaudio.PyAudio()
+        
         self._audio_stream = self._audio_interface.open(
             format=pyaudio.paInt16,
             # The API currently only supports 1-channel (mono) audio
@@ -114,8 +129,6 @@ class MicrophoneStream:
 class Listener:
     _wake_keywords = ['picovoice', 'bumblebee']
 
-    
-
     def __init__(self):
         # PicoVoice for Wake word detection
         pico_access_key = self._read_pico_access_key()
@@ -168,9 +181,8 @@ class Listener:
         except Exception as e:
             logger.error(e)
             self._porcupine_recorder.stop()
-
+            
     def listen_for_dream(self, timeout=5):
-        
         logger.info("Listening for dream...")
         with MicrophoneStream() as stream:
             audio_generator = stream.generator()
@@ -181,12 +193,13 @@ class Listener:
             )
 
             responses = self._speech_client.streaming_recognize(self._streaming_config, requests)
-
-            # TODO: This is a blocking call. We need to make it non-blocking by addding a timeout            
+    
             for response in responses:
                 if not response.results:
+                    if response.speech_event_type==speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
+                        break
                     continue
-
+                
                 # The `results` list is consecutive. For streaming, we only care about
                 # the first result being considered, since once it's `is_final`, it
                 # moves on to considering the next utterance.
@@ -201,6 +214,7 @@ class Listener:
 
                 if result.is_final:
                     break
+
 
     def shutdown(self):
         if self._porcupine_recorder.is_recording:
