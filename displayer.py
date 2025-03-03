@@ -45,6 +45,7 @@ class Displayer:
         self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # Fullscreen mode
         self._screen_lock = threading.Lock()
         pygame.display.set_caption("Dreamscaper")
+        pygame.mouse.set_visible(False)
 
         # These are defaults that cannot be put in the kwargs
         self._defaults = {
