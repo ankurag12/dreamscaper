@@ -157,7 +157,7 @@ class Listener:
         self._streaming_config = speech.StreamingRecognitionConfig(
             config=config,
             interim_results=True,
-            single_utterance=True  # Not sure about this
+            single_utterance=True
         )
 
     @staticmethod
@@ -197,7 +197,10 @@ class Listener:
 
             responses = self._speech_client.streaming_recognize(self._streaming_config, requests)
 
+            finalized_transcript = str()
+
             for response in responses:
+                logger.info(f"Response from Google Cloud:\n{response}")
                 if not response.results:
                     if response.speech_event_type == speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
                         break
@@ -210,13 +213,13 @@ class Listener:
                 if not result.alternatives:
                     continue
 
-                # Display the transcription of the top alternative.
-                transcript = result.alternatives[0].transcript
-
-                yield transcript
+                # Transcription of the top alternative.
+                current_transcript = result.alternatives[0].transcript
 
                 if result.is_final:
-                    break
+                    finalized_transcript += current_transcript
+
+                yield finalized_transcript + current_transcript
 
     def shutdown(self):
         if self._porcupine_recorder.is_recording:
