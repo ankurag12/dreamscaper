@@ -15,10 +15,10 @@ class Dreamer:
         hf_token = self._read_hf_token()
 
         self._clients = OrderedDict({
-            "Speed": InferenceClient("stabilityai/stable-diffusion-3.5-large-turbo", token=hf_token),
             "Balance": InferenceClient("stabilityai/stable-diffusion-3.5-large", token=hf_token),
             "Realistic": InferenceClient("black-forest-labs/FLUX.1-dev", token=hf_token),
-            "Backup": InferenceClient("stable-diffusion-v1-5/stable-diffusion-v1-5", token=hf_token)
+            "Backup": InferenceClient("stable-diffusion-v1-5/stable-diffusion-v1-5", token=hf_token),
+            "Speed": InferenceClient("stabilityai/stable-diffusion-3.5-large-turbo", token=hf_token)
         })
 
         self._dream_prompts = self._read_dream_prompts()
