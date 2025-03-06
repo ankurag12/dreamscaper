@@ -139,7 +139,8 @@ class Listener:
         self._porcupine = pvporcupine.create(
             access_key=pico_access_key,
             keywords=Listener._wake_keywords,
-            keyword_paths=["models/I-have-a-dream_en_raspberry-pi_v3_0_0.ppn"]
+            keyword_paths=["models/I-have-a-dream_en_raspberry-pi_v3_0_0.ppn"],
+            sensitivities=[0.3]
         )
 
         self._porcupine_recorder = PvRecorder(frame_length=self._porcupine.frame_length)
@@ -197,7 +198,7 @@ class Listener:
 
             responses = self._speech_client.streaming_recognize(self._streaming_config, requests)
 
-            finalized_transcript = str()
+            finalized_transcript = list()
 
             for response in responses:
                 logger.info(f"Response from Google Cloud:\n{response}")
@@ -206,20 +207,21 @@ class Listener:
                         break
                     continue
 
-                # The `results` list is consecutive. For streaming, we only care about
-                # the first result being considered, since once it's `is_final`, it
-                # moves on to considering the next utterance.
-                result = response.results[0]
-                if not result.alternatives:
+                if not response.results[0].alternatives:
                     continue
 
-                # Transcription of the top alternative.
-                current_transcript = result.alternatives[0].transcript
+                current_transcript = list()
+                # We take transcription of the top alternative from all the results as some chunks might never be deemed "is_final".
+                for result in response.results:
+                    this_transcript = result.alternatives[0].transcript
 
-                if result.is_final:
-                    finalized_transcript += current_transcript
+                    if result.is_final:
+                        finalized_transcript.append(this_transcript)
+                    else: 
+                        current_transcript.append(this_transcript)
 
-                yield finalized_transcript + current_transcript
+                full_transcript = " ".join(finalized_transcript) + " " + " ".join(current_transcript)
+                yield full_transcript
 
     def shutdown(self):
         if self._porcupine_recorder.is_recording:
