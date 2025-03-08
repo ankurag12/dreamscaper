@@ -179,6 +179,10 @@ class Displayer:
 
         self._show_text(dream_text,
                         **self._dream_text_props)
+        
+    def show_message(self, msg):
+        self.clear_screen()
+        self._show_text(msg)   
 
     def run(self):
         # Main loop

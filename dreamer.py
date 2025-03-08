@@ -4,31 +4,38 @@ import os.path
 import random
 from collections import OrderedDict
 
-from huggingface_hub import InferenceClient
+from inference_clients import HFInferenceClient, TogetherClient, NebiusClient
 
 logger = logging.getLogger(__name__)
 
 
 class Dreamer:
 
+    # Priority order based on the cost to use FLUX-schnell as of 2025/03/07
+    _client_priority_order = (
+        TogetherClient,
+        NebiusClient,
+        HFInferenceClient,
+    )
+
     def __init__(self):
-        hf_token = self._read_hf_token()
-
-        self._clients = OrderedDict({
-            "Balance": InferenceClient("stabilityai/stable-diffusion-3.5-large", token=hf_token),
-            "Realistic": InferenceClient("black-forest-labs/FLUX.1-dev", token=hf_token),
-            "Backup": InferenceClient("stable-diffusion-v1-5/stable-diffusion-v1-5", token=hf_token),
-            "Speed": InferenceClient("stabilityai/stable-diffusion-3.5-large-turbo", token=hf_token)
-        })
-
+        self._clients = self._initialize_clients()
+        if not self._clients:
+            raise Exception("No clients could be initialized")
         self._dream_prompts = self._read_dream_prompts()
 
-    @staticmethod
-    def _read_hf_token():
-        with open(".hf_token.txt", "r") as f:
-            token = f.read().strip()
-        return token
 
+    def _initialize_clients(self):
+        clients = list()
+        for client_class in self._client_priority_order:
+            try:
+                client = client_class()
+                clients.append(client)
+            except Exception as e:
+                logger.error(f"Error initializing {client}: {e}")
+                continue
+        return clients
+    
     @staticmethod
     def _read_dream_prompts():
         files = glob.glob(os.path.join("prompts", "**", "*.txt"), recursive=True)
@@ -38,20 +45,14 @@ class Dreamer:
                 dream_prompts[os.path.splitext(os.path.basename(file))[0]] = f.read().splitlines()
         return dream_prompts
 
-    def visualize(self, text, quality=None, save_as=None, height=1024, width=1024):
-        # Make a copy of the clients so that the original order is not disturbed and there's no contention between threads
-        clients = self._clients.copy()
-        # If quality is provided, give preference to that in the order of clients
-        if quality:
-            clients.move_to_end(quality, last=False)
-
+    def visualize(self, text, save_as=None, height=1024, width=1024):
         image = None
-        for quality, client in clients.items():
-            logger.info(f"Pinging HF.\nModel: {client}\nPrompt: {text}")
+        for client in self._clients:
+            logger.info(f"Pinging client: {client}\nPrompt: {text}")
             try:
-                image = clients[quality].text_to_image(text, height=height, width=width)
+                image = client.text_to_image(text, height=height, width=width)
             except Exception as e:
-                logger.error(f"{e} raised while trying to use {client}; will try a different model")
+                logger.error(f"{e} raised while trying to use {client}; will try next client")
                 continue
             break
 

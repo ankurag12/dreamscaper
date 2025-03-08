@@ -83,6 +83,14 @@ class Dreamscaper:
                                                     height=self._image_size[1])
 
                 self._displayer.stop_show_loading()
+
+                if not dream_img:
+                    self._displayer.show_message("⚠️⚠️⚠️\nDream could not be visualized\nTry again and check logs⚠️⚠️⚠️")
+                    time.sleep(5)
+                    self._displayer.show_image(self._last_image)
+                    self.set_state(State.IMAGE)
+                    continue
+
                 self._displayer.show_image(dream_img)
                 self.set_state(State.IMAGE)
 

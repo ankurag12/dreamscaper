@@ -198,7 +198,7 @@ class Listener:
 
             responses = self._speech_client.streaming_recognize(self._streaming_config, requests)
 
-            finalized_transcript = list()
+            finalized_transcript = str()
 
             for response in responses:
                 logger.info(f"Response from Google Cloud:\n{response}")
@@ -216,11 +216,11 @@ class Listener:
                     this_transcript = result.alternatives[0].transcript
 
                     if result.is_final:
-                        finalized_transcript.append(this_transcript)
+                        finalized_transcript += this_transcript
                     else: 
-                        current_transcript.append(this_transcript)
+                        current_transcript += this_transcript
 
-                full_transcript = " ".join(finalized_transcript) + " " + " ".join(current_transcript)
+                full_transcript = finalized_transcript + " " + current_transcript
                 yield full_transcript
 
     def shutdown(self):

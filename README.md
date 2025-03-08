@@ -32,13 +32,13 @@ pip install -r requirements.txt
 
 ### Access Keys
 
-This project uses external APIs, which need an access key/token to use their service
+This project uses external services, which need an access key to use their API
 
 - [Picovoice Porcupine](https://picovoice.ai/platform/porcupine/) for wake word detection (offline, on device
   processing).
 - [Google Cloud Speech to Text API](https://cloud.google.com/speech-to-text/docs) for converting the "dream" audio
   prompt to text.
-- [HuggingFace Inference API](https://huggingface.co/docs/api-inference/index) for converting the text to image.
+- [Together AI](https://docs.together.ai/docs/introduction) for converting the text to image (inference).
 
 #### Picovoice Porcupine
 

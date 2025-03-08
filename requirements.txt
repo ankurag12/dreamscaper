@@ -8,3 +8,5 @@ pvrecorder
 pvporcupine
 google-cloud-speech
 pyaudio
+together
+openai
