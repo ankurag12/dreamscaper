@@ -1,9 +1,10 @@
 import logging
+import random
 import threading
 import time
 from enum import Enum, auto
 from pathlib import Path
-import random
+
 import coloredlogs
 
 from displayer import Displayer
@@ -106,7 +107,7 @@ class Dreamscaper:
             if not dream_img:
                 dream_img = self.get_random_image_from_past()
                 logger.info(f"Repeating dream {dream_img}")
-            
+
             # Don't want to display an image if in on-demand mode
             # or if the last image was displayed less than `period` seconds ago
             while (self.get_state() in (State.LISTENING, State.LOADING)) or (

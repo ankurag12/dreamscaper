@@ -217,7 +217,7 @@ class Listener:
 
                     if result.is_final:
                         finalized_transcript += this_transcript
-                    else: 
+                    else:
                         current_transcript += this_transcript
 
                 full_transcript = finalized_transcript + " " + current_transcript

@@ -2,15 +2,13 @@ import glob
 import logging
 import os.path
 import random
-from collections import OrderedDict
 
-from inference_clients import HFInferenceClient, TogetherClient, NebiusClient
+from inference_clients import HFInferenceClient, NebiusClient, TogetherClient
 
 logger = logging.getLogger(__name__)
 
 
 class Dreamer:
-
     # Priority order based on the cost to use FLUX-schnell as of 2025/03/07
     _client_priority_order = (
         TogetherClient,
@@ -24,7 +22,6 @@ class Dreamer:
             raise Exception("No clients could be initialized")
         self._dream_prompts = self._read_dream_prompts()
 
-
     def _initialize_clients(self):
         clients = list()
         for client_class in self._client_priority_order:
@@ -35,7 +32,7 @@ class Dreamer:
                 logger.error(f"Error initializing {client_class}: {e}")
                 continue
         return clients
-    
+
     @staticmethod
     def _read_dream_prompts():
         files = glob.glob(os.path.join("prompts", "**", "*.txt"), recursive=True)
