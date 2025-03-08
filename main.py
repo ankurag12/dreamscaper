@@ -2,7 +2,8 @@ import logging
 import threading
 import time
 from enum import Enum, auto
-
+from pathlib import Path
+import random
 import coloredlogs
 
 from displayer import Displayer
@@ -44,7 +45,7 @@ class Dreamscaper:
         width = int(1024 * aspect_ratio / 16) * 16
         return width, 1024
 
-    def on_demand_dream(self, quality="Speed", timeout=5):
+    def on_demand_dream(self, timeout=5):
         while True:
             wake_word = self._listener.listen_for_wake()  # This is a blocking call
 
@@ -76,16 +77,14 @@ class Dreamscaper:
                 self._displayer.show_loading()
                 self.set_state(State.LOADING)
 
-                # For better user experience of on-demand dream, choose a model that offers better speed
                 dream_img = self._dreamer.visualize(dream_text,
-                                                    quality=quality,
                                                     width=self._image_size[0],
                                                     height=self._image_size[1])
 
                 self._displayer.stop_show_loading()
 
                 if not dream_img:
-                    self._displayer.show_message("⚠️⚠️⚠️\nDream could not be visualized\nTry again and check logs⚠️⚠️⚠️")
+                    self._displayer.show_message("Error generating image; Try again")
                     time.sleep(5)
                     self._displayer.show_image(self._last_image)
                     self.set_state(State.IMAGE)
@@ -96,12 +95,18 @@ class Dreamscaper:
 
             self.set_last_image_ts(time.time(), dream_img)
 
-    def periodic_dream(self, quality="Realistic", period=86400):
+    def periodic_dream(self, period=86400):
         while True:
             dream_text = self._dreamer.imagine()
-            # For periodic dreams, we can afford to use models that offer high quality at the cost of more time
-            dream_img = self._dreamer.visualize(dream_text, quality=quality)
+            dream_img = self._dreamer.visualize(dream_text,
+                                                width=self._image_size[0],
+                                                height=self._image_size[1])
 
+            # If dream image could not be generated, choose a random one from the repo
+            if not dream_img:
+                dream_img = self.get_random_image_from_past()
+                logger.info(f"Repeating dream {dream_img}")
+            
             # Don't want to display an image if in on-demand mode
             # or if the last image was displayed less than `period` seconds ago
             while (self.get_state() in (State.LISTENING, State.LOADING)) or (
@@ -113,6 +118,15 @@ class Dreamscaper:
                 self.set_state(State.IMAGE)
 
             self.set_last_image_ts(time.time(), dream_img)
+
+    @staticmethod
+    def get_random_image_from_past():
+        imgs = [f for f in Path("dreams").iterdir() if f.is_file()]
+
+        if imgs:
+            return random.choice(imgs)
+        else:
+            return "assets/logo.jpeg"
 
     def set_state(self, state):
         with self._state_lock:
@@ -137,12 +151,12 @@ class Dreamscaper:
         self._displayer.show_startup()
 
         listener_thread = threading.Thread(target=self.on_demand_dream,
-                                           kwargs={"quality": "Speed", "timeout": 5},
+                                           kwargs={"timeout": 5},
                                            daemon=True)
         listener_thread.start()
 
         dreamer_thread = threading.Thread(target=self.periodic_dream,
-                                          kwargs={"quality": "Realistic", "period": 86400},
+                                          kwargs={"period": 86400},
                                           daemon=True)
         dreamer_thread.start()
 

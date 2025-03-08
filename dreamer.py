@@ -32,7 +32,7 @@ class Dreamer:
                 client = client_class()
                 clients.append(client)
             except Exception as e:
-                logger.error(f"Error initializing {client}: {e}")
+                logger.error(f"Error initializing {client_class}: {e}")
                 continue
         return clients
     

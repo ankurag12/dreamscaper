@@ -177,7 +177,7 @@ cython_debug/
 .hf_token.txt
 
 # PicoVoice Access key
-.pico_access_key.txt
+.picovoice-key.txt
 
 # Google Cloud API access key
 .google-api-key.json

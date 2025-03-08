@@ -5,10 +5,11 @@ from PIL import Image
 from io import BytesIO
 from openai import OpenAI
 
-class InferenceClient:
+class InferenceClientBase:
     def __init__(self, api_key=None):
         if api_key is None:
             api_key = self.read_token()
+        self._api_key = api_key
 
     def text_to_image(self, text, height=1024, width=1024):
         raise NotImplementedError
@@ -23,10 +24,10 @@ class InferenceClient:
         raise NotImplementedError
     
 
-class HFInferenceClient(InferenceClient):
+class HFInferenceClient(InferenceClientBase):
     def __init__(self, provider="hf-inference", api_key=None):
         super().__init__(api_key=api_key)
-        self._client = InferenceClient(provider=provider, api_key=api_key)
+        self._client = InferenceClient(provider=provider, api_key=self._api_key)
         
     def text_to_image(self, text, model="black-forest-labs/FLUX.1-schnell", height=1024, width=1024):
         image = self._client.text_to_image(text, 
@@ -39,10 +40,10 @@ class HFInferenceClient(InferenceClient):
     def default_api_key_path(cls):
         return ".hf_token.txt"
     
-class TogetherClient(InferenceClient):
+class TogetherClient(InferenceClientBase):
     def __init__(self, api_key=None):
         super().__init__(api_key=api_key)
-        self._client = Together(api_key=api_key)
+        self._client = Together(api_key=self._api_key)
 
     def text_to_image(self, text, model="black-forest-labs/FLUX.1-schnell-free", height=1024, width=1024):
         response = self._client.images.generate(prompt=text, 
@@ -59,11 +60,11 @@ class TogetherClient(InferenceClient):
     def default_api_key_path(cls):
         return ".together-ai-key.txt"
     
-class NebiusClient(InferenceClient):
+class NebiusClient(InferenceClientBase):
     def __init__(self, api_key=None):
         super().__init__(api_key=api_key)
         self._client = OpenAI(base_url="https://api.studio.nebius.com/v1/", 
-                              api_key=api_key)
+                              api_key=self._api_key)
         
     def text_to_image(self, text, model="black-forest-labs/flux-schnell", height=1024, width=1024):
         response = self._client.images.generate(
@@ -78,7 +79,6 @@ class NebiusClient(InferenceClient):
         )
         data = base64.b64decode(response.data[0].b64_json)
         image = Image.open(BytesIO(data))
-        image.show()
         return image
     
     @classmethod

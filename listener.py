@@ -163,7 +163,7 @@ class Listener:
 
     @staticmethod
     def _read_pico_access_key():
-        with open(".pico_access_key.txt", "r") as f:
+        with open(".picovoice-key.txt", "r") as f:
             access_key = f.read()
         return access_key
 
@@ -210,7 +210,7 @@ class Listener:
                 if not response.results[0].alternatives:
                     continue
 
-                current_transcript = list()
+                current_transcript = str()
                 # We take transcription of the top alternative from all the results as some chunks might never be deemed "is_final".
                 for result in response.results:
                     this_transcript = result.alternatives[0].transcript
