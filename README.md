@@ -1,11 +1,13 @@
 # dreamscaper
 
-Voice activated digital art! 🗣🖼️️
+Voice activated digital art! 🗣🖼️️  
+(+images generated from random combination of words)
 
 It uses generative AI, so the art can be as imaginative as your dreams, hence the name!
 
 Although I upcycled an old Macbook's display for this specific project, the code should work on any computer with a
-display. More details on that part of the project on the [project page](https://ankurag12.github.io/dreamscaper/).
+display, like a RaspberryPi connected to your TV!
+More details on that part of the project on the [project page](https://ankurag12.github.io/dreamscaper/).
 
 ## Setting up
 
@@ -74,8 +76,7 @@ python main.py
 ```
 
 or from included `start.sh` script which is useful when running on a remote like RPi as it sets up some
-required env
-variables and doesn't terminate when you quit SSH
+required env variables and doesn't terminate when you quit SSH
 
 ```commandline
 ./start.sh
@@ -87,3 +88,7 @@ Dreamscaper responds to wake phrase "_I have a dream_", after which the dream ca
 
 For example: "_I have a dream, a cat is cooking in a garden with headphones on_"
 
+In addition to generating images in response to a voice prompt, Dreamscaper also generates a new image every day from a
+prompt constructed with random combination of various part of a phrase ("subject", "object", "actions", etc.). These
+parts are listed in their respective text files in `prompts` directory. "The longer (and more creative) these lists are,
+the more unique combinations and interesting dreams there will be!"
