@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Dreamscaper
-description: Voice activated digital art! 🗣🖼️️ <br> (+images generated from random combination of words)
+description: Digital art from voice prompt 🗣🖼️️ <br> (+randomly constructed sentence)
 ---
 
 # Dreamscaper

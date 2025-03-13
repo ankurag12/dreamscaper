@@ -1,7 +1,7 @@
 # dreamscaper
 
-Voice activated digital art! 🗣🖼️️  
-(+images generated from random combination of words)
+Digital art from voice prompt! 🗣🖼️️  
+(+randomly constructed sentence)
 
 It uses generative AI, so the art can be as imaginative as your dreams, hence the name!
 
@@ -36,11 +36,11 @@ pip install -r requirements.txt
 
 This project uses external services, which need an access key to use their API
 
-- [Picovoice Porcupine](https://picovoice.ai/platform/porcupine/) for wake word detection (offline, on device
-  processing).
+- [Picovoice Porcupine](https://picovoice.ai/platform/porcupine/) for wake word detection (offline, on device processing).
 - [Google Cloud Speech to Text API](https://cloud.google.com/speech-to-text/docs) for converting the "dream" audio
   prompt to text.
-- [Together AI](https://docs.together.ai/docs/introduction) for converting the text to image (inference).
+- [Together AI](https://docs.together.ai/docs/introduction) / [Nebius](https://studio.nebius.com/playground) / [HuggingFace](https://huggingface.co/join) for converting the text to image (inference).
+
 
 #### Picovoice Porcupine
 
@@ -58,11 +58,13 @@ Sign up on [Google Cloud](https://cloud.google.com). Copy your Access key json f
 named `.google-api-key.json` in the project root dir.
 > 💡 As of this writing, Google provides 60min/month for free!
 
-#### HuggingFace Inference API
+#### Inference API
 
-Sign up on [HuggingFace](https://huggingface.co/join). Copy your access token from profile settings and save to a file
-named `.hf_token.txt` in the project root dir.
-> 💡 As of this writing, HuggingFace provides 1000 images/day for free!
+The space of generative AI inference providers is evolving fast, and with it their pricing models. [HuggingFace](https://huggingface.co) went from 1000 images/day to just $0.10/month of free credits! Sign-up on one or more of the following, copy your access key from profile settings and save to a file named as mentioned in the project root dir
+- [Together AI](https://docs.together.ai/docs/introduction): `.together-ai-key.txt`
+- [Nebius](https://studio.nebius.com/playground): `.nebius-key.txt`
+- [HuggingFace](https://huggingface.co/join): `hf_token.txt`
+
 
 > ❗ Keep all these access keys secure. Do not share or upload them to publicly available repos. I have added these three
 > files to `.gitignore` just so that they don't accidentally get pushed to GitHub
@@ -75,8 +77,7 @@ You can run the code either by calling `main.py` explicitly
 python main.py
 ```
 
-or from included `start.sh` script which is useful when running on a remote like RPi as it sets up some
-required env variables and doesn't terminate when you quit SSH
+or from included `start.sh` script which runs `main.py` in the background and saves logs to a `stdout.log`.
 
 ```commandline
 ./start.sh
@@ -92,3 +93,4 @@ In addition to generating images in response to a voice prompt, Dreamscaper also
 prompt constructed with random combination of various part of a phrase ("subject", "object", "actions", etc.). These
 parts are listed in their respective text files in `prompts` directory. "The longer (and more creative) these lists are,
 the more unique combinations and interesting dreams there will be!"
+
