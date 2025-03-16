@@ -1,7 +1,7 @@
 # dreamscaper
 
 Digital art from voice prompt! 🗣🖼️️  
-(+randomly constructed sentence)
+(& randomly constructed sentence)
 
 It uses generative AI, so the art can be as imaginative as your dreams, hence the name!
 
@@ -69,7 +69,7 @@ The space of generative AI inference providers is evolving fast, and with it the
 > ❗ Keep all these access keys secure. Do not share or upload them to publicly available repos. I have added these three
 > files to `.gitignore` just so that they don't accidentally get pushed to GitHub
 
-### Run
+## Running
 
 You can run the code either by calling `main.py` explicitly
 
@@ -77,7 +77,7 @@ You can run the code either by calling `main.py` explicitly
 python main.py
 ```
 
-or from included `start.sh` script which runs `main.py` in the background and saves logs to a `stdout.log`.
+or from included `start.sh` script which runs `main.py` in the background and saves logs to `stdout.log`.
 
 ```commandline
 ./start.sh
