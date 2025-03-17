@@ -7,7 +7,7 @@ It uses generative AI, so the art can be as imaginative as your dreams, hence th
 
 Although I upcycled an old Macbook's display for this specific project, the code should work on any computer with a
 display, like a RaspberryPi connected to your TV!
-More details on that part of the project on the [project page](https://ankurag12.github.io/dreamscaper/).
+More details on different components of the project and demos are on the [project page](https://ankurag12.github.io/dreamscaper/).
 
 ## Setting up
 
@@ -60,18 +60,17 @@ named `.google-api-key.json` in the project root dir.
 
 #### Inference API
 
-The space of generative AI inference providers is evolving fast, and with it their pricing models. [HuggingFace](https://huggingface.co) went from 1000 images/day to just $0.10/month of free credits! Sign-up on one or more of the following, copy your access key from profile settings and save to a file named as mentioned in the project root dir
+The space of generative AI inference providers is evolving fast, and with it their pricing models. [HuggingFace](https://huggingface.co) went from 1000 images/day to just $0.10/month of free credits! Sign-up on one or more of the following, copy your access key from profile settings and save to a file named as mentioned in the project root dir.
 - [Together AI](https://docs.together.ai/docs/introduction): `.together-ai-key.txt`
 - [Nebius](https://studio.nebius.com/playground): `.nebius-key.txt`
 - [HuggingFace](https://huggingface.co/join): `hf_token.txt`
 
 
-> ❗ Keep all these access keys secure. Do not share or upload them to publicly available repos. I have added these three
-> files to `.gitignore` just so that they don't accidentally get pushed to GitHub
+> ❗ Keep all these access keys secure. Do not share or upload them to publicly available repos. These three files have been added to `.gitignore` just so that they don't accidentally get pushed to GitHub
 
 ## Running
 
-You can run the code either by calling `main.py` explicitly
+Run the code either by calling `main.py` explicitly
 
 ```commandline
 python main.py
@@ -91,6 +90,5 @@ For example: "_I have a dream, a cat is cooking in a garden with headphones on_"
 
 In addition to generating images in response to a voice prompt, Dreamscaper also generates a new image every day from a
 prompt constructed with random combination of various part of a phrase ("subject", "object", "actions", etc.). These
-parts are listed in their respective text files in `prompts` directory. "The longer (and more creative) these lists are,
-the more unique combinations and interesting dreams there will be!"
+parts are listed in their respective text files in `prompts` directory. The longer (and more creative) these lists are, the more unique combinations and interesting dreams there will be!
 

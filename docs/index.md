@@ -4,7 +4,27 @@ title: Dreamscaper
 description: Digital art from voice prompt 🗣🖼️️ <br> (& randomly constructed sentence)
 ---
 
-# Dreamscaper
+<video width="640" height="444" controls>
+  <source src="tiger_penguin.mov" type="video/mov">
+  Your browser does not support the video tag.
+</video>
+
+<div style="display: flex; justify-content: space-around;">
+  <figure style="text-align: center; margin: 0; width: 30%;">
+    <img src="scifi_city_as_a_picasso_painting.jpeg" alt="scifi_city_as_a_picasso_painting" style="width: 100%;"/>
+    <figcaption>"sci-fi city as a picasso painting"</figcaption>
+  </figure>
+  
+  <figure style="text-align: center; margin: 0; width: 30%;">
+    <img src="camping_under_starry_night_with_a_stream_nearby.jpeg" alt="camping_under_starry_night_with_a_stream_nearby" style="width: 100%;"/>
+    <figcaption>"camping under a starry night with a stream nearby"</figcaption>
+  </figure>
+
+  <figure style="text-align: center; margin: 0; width: 30%;">
+    <img src="cat_barbequing_with_headphones_on.jpg" alt="cat_barbequing_with_headphones_on" style="width: 100%;"/>
+    <figcaption>"cat barbequing with headphones on"</figcaption>
+  </figure>
+</div>
 
 Dreamscaper responds to wake phrase "_I have a dream_", after which a dream to be visualized can be described.
 
@@ -38,7 +58,7 @@ this concept (and name) of Dreamscaper.
 - Power supplies: 12V 2.5A for the LCD controller, 5V 3A for the Raspberry Pi. One could use a buck converter for 12V->5V and use just the one power supply to clean-up wiring; I didn't as I already had the power supplies in my box of random stuff.
 
 ### Code 
-<img src="dreamscaper.svg" width="600px" />
+<img src="dreamscaper.svg" width="900px" />
 
 Dreams to be visualized are generated using a text-to-image Inference API like [Together AI](https://docs.together.ai/docs/introduction) / [Nebius](https://studio.nebius.com/playground) / [HuggingFace](https://huggingface.co/join). 
 
@@ -59,5 +79,3 @@ This part of the project might seem trivial or boring for some; however, for me,
 - [Epoxy Glue](https://www.amazon.com/dp/B001Z3C3AG) or wood glue to glue the boards pieces together.
 - [Sanding Sponge](https://www.amazon.com/dp/B08279QR75) of different grits; just sand papers should also work.
 - [Danish Oil](https://www.amazon.com/dp/B00CECVM8Q) for finishing. It really popped out a nice shine in the wood without being glossy. A little patience is required as it needs 3 coats, each taking 6 hours to cure, but the end result was definitely worth it.
-
-
