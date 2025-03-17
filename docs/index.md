@@ -5,7 +5,7 @@ description: Digital art from voice prompt 🗣🖼️️ <br> (& randomly const
 ---
 
 <video width="100%" controls>
-  <source src="tiger_penguin.mov" type="video/quicktime">
+  <source src="tiger_penguin.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
