@@ -88,6 +88,7 @@ Dreamscaper responds to wake phrase "_I have a dream_", after which the dream ca
 
 For example: "_I have a dream, a cat is cooking in a garden with headphones on_"
 
+![cat_barbequing_with_headphones_on](docs/cat_barbequing_with_headphones_on.jpg)
 In addition to generating images in response to a voice prompt, Dreamscaper also generates a new image every day from a
 prompt constructed with random combination of various part of a phrase ("subject", "object", "actions", etc.). These
 parts are listed in their respective text files in `prompts` directory. The longer (and more creative) these lists are, the more unique combinations and interesting dreams there will be!
