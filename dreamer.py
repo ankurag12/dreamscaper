@@ -69,5 +69,7 @@ class Dreamer:
         """This generates prompt for a new dream using combination of random subject-activity"""
         dream = " ".join([random.choice(self._dream_prompts["adjectives"]),
                           random.choice(self._dream_prompts["subjects"]),
-                          random.choice(self._dream_prompts["actions"])])
+                          random.choice(self._dream_prompts["actions"]),
+                          random.choice(self._dream_prompts["objects"]),
+                          random.choice(self._dream_prompts["places"])])
         return dream
