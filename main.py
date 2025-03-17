@@ -63,7 +63,7 @@ class Dreamscaper:
 
                 dream_text = str()
 
-                for dream_text in self._listener.listen_for_dream(timeout=timeout):
+                for dream_text in self._listener.listen_for_dream():
                     logger.info(f"dream_text = {dream_text}")
                     self._displayer.show_dream_prompt(dream_text)
 

@@ -186,7 +186,7 @@ class Listener:
             logger.error(e)
             self._porcupine_recorder.stop()
 
-    def listen_for_dream(self, timeout=5):
+    def listen_for_dream(self):
         logger.info("Listening for dream...")
         with MicrophoneStream() as stream:
             audio_generator = stream.generator()
