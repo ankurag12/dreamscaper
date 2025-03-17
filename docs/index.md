@@ -3,11 +3,12 @@ layout: default
 title: Dreamscaper
 description: Digital art from voice prompt 🗣🖼️️ <br> (& randomly constructed sentence)
 ---
-
-<video width="100%" controls>
-  <source src="tiger_penguin.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<div style="text-align: center;">
+  <video style="width: 50%; height: auto;" controls>
+    <source src="tiger_penguin.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 <div style="display: flex; justify-content: space-around;">
   <figure style="text-align: center; margin: 0; width: 30%;">
@@ -58,7 +59,9 @@ this concept (and name) of Dreamscaper.
 - Power supplies: 12V 2.5A for the LCD controller, 5V 3A for the Raspberry Pi. One could use a buck converter for 12V->5V and use just the one power supply to clean-up wiring; I didn't as I already had the power supplies in my box of random stuff.
 
 ### Code 
-<img src="dreamscaper.svg" width="900px" />
+<div style="text-align: center;">
+  <img src="dreamscaper.svg" style="width: 80%;"/>
+</div>
 
 Dreams to be visualized are generated using a text-to-image Inference API like [Together AI](https://docs.together.ai/docs/introduction) / [Nebius](https://studio.nebius.com/playground) / [HuggingFace](https://huggingface.co/join). 
 
