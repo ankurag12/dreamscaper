@@ -1,6 +1,6 @@
 /* Adjust container width */
 .container {
-    max-width: 100%; /* Adjust this percentage to increase/decrease width */
+    max-width: 100% !important; /* Adjust this percentage to increase/decrease width */
     margin: 0 auto; /* Center the container */
     padding-left: 20px; /* Optional: add padding for better readability */
     padding-right: 20px; /* Optional: add padding for better readability */

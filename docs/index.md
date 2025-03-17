@@ -4,8 +4,8 @@ title: Dreamscaper
 description: Digital art from voice prompt 🗣🖼️️ <br> (& randomly constructed sentence)
 ---
 
-<video width="640" height="444" controls>
-  <source src="tiger_penguin.mov" type="video/mov">
+<video width="100%" controls>
+  <source src="tiger_penguin.mov" type="video/quicktime">
   Your browser does not support the video tag.
 </video>
 
