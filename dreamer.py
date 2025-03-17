@@ -39,7 +39,8 @@ class Dreamer:
         dream_prompts = dict()
         for file in files:
             with open(file, "r") as f:
-                dream_prompts[os.path.splitext(os.path.basename(file))[0]] = f.read().splitlines()
+                lines = [line for line in f.read().splitlines() if line]
+                dream_prompts[os.path.splitext(os.path.basename(file))[0]] = lines
         return dream_prompts
 
     def visualize(self, text, save_as=None, height=1024, width=1024):
