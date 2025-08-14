@@ -27,7 +27,11 @@ class Dreamscaper:
 
     def __init__(self):
         self._dreamer = Dreamer()
-        self._listener = Listener()
+        try:
+            self._listener = Listener()
+        except Exception as e:
+            logger.error(f"Could not create listener.\n{e}")
+            self._listener = None
         self._displayer = Displayer()
         self._app_running = threading.Event()
         self._displayer_lock = threading.Lock()
@@ -48,6 +52,8 @@ class Dreamscaper:
 
     def on_demand_dream(self, timeout=5):
         while True:
+            if not self._listener:
+                break
             wake_word = self._listener.listen_for_wake()  # This is a blocking call
 
             # listen_for_wake was terminated
