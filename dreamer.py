@@ -2,7 +2,7 @@ import glob
 import logging
 import os.path
 import random
-
+import concurrent.futures
 from inference_clients import HFInferenceClient, NebiusClient, TogetherClient
 
 logger = logging.getLogger(__name__)
@@ -43,12 +43,17 @@ class Dreamer:
                 dream_prompts[os.path.splitext(os.path.basename(file))[0]] = lines
         return dream_prompts
 
+    def _call_api_blocking(self, client, text, height, width):
+        return client.text_to_image(text, height=height, width=width)
+
     def visualize(self, text, save_as=None, height=1024, width=1024):
         image = None
         for client in self._clients:
             logger.info(f"Pinging client: {client}\nPrompt: {text}")
             try:
-                image = client.text_to_image(text, height=height, width=width)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(self._call_api_blocking, client, text, height, width)
+                    image = future.result(timeout=60)
             except Exception as e:
                 logger.error(f"{e} raised while trying to use {client}; will try next client")
                 continue
