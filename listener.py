@@ -6,11 +6,13 @@ import time
 from contextlib import contextmanager
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 
+import numpy as np
 import pvporcupine
 import pyaudio
-from clapDetector import ClapDetector
 from google.cloud import speech
+from openwakeword.model import Model
 from pvrecorder import PvRecorder
+import openwakeword
 
 
 # Used in the context manager to disable ALSA errors
@@ -152,17 +154,24 @@ class Listener:
         self._porcupine = None
         self._porcupine_recorder = None
 
-        # Initialize clap detector with platform-appropriate device
-        # Raspberry Pi optimized settings:
-        # - exceptionOnOverflow=False: Prevents crashes when buffer overflows (common on RPi)
-        # - bufferLength=4096: Larger buffer reduces read frequency and overflow risk
-        self._clap_detector = ClapDetector(
-            inputDevice=self._get_input_device(),
-            logLevel=10,
-            exceptionOnOverflow=False,  # Don't crash on buffer overflow
-            bufferLength=4096           # Larger buffer for slower devices
-        )
-        self._clap_detector.initAudio()
+        # Initialize openWakeWord as backup wake word detection
+        # Available wake words: "hey_jarvis", "alexa", "hey_mycroft", "hey_rhasspy"
+        # inference_framework options:
+        #   - 'onnx' (recommended): Lightweight, works on all platforms, faster startup
+        #   - 'tflite': Uses TensorFlow Lite, larger but more compatible with TF ecosystem
+        try:
+            logger.info("Initializing openWakeWord (backup wake word detection)...")
+            openwakeword.utils.download_models()
+            self._oww_model = Model(
+                wakeword_models=["hey_jarvis"],
+                inference_framework='onnx'  # 'onnx' (recommended) or 'tflite'
+            )
+            self._oww_audio = None
+            self._oww_stream = None
+            logger.info("openWakeWord initialized successfully with 'hey jarvis' model")
+        except Exception as e:
+            logger.error(f"Could not initialize openWakeWord: {e}")
+            self._oww_model = None
 
         try:
             self._porcupine = pvporcupine.create(
@@ -257,29 +266,53 @@ class Listener:
 
         return None
 
-    def _listen_for_claps(self, threshold_bias=6000, lowcut=200, highcut=3200):
-        logger.info("Listening for claps...")
+    def _listen_for_oww(self):
+        """Listen for 'hey jarvis' wake word using openWakeWord with PvRecorder"""
+        if not self._oww_model:
+            return None
+
+        logger.info("Listening for 'hey jarvis' using openWakeWord...")
+
+        # openWakeWord needs 1280 samples per chunk (80ms at 16kHz)
+        # PvRecorder frame_length will be 512 by default, so we'll accumulate frames
+        frame_length = 512
+        oww_chunk_size = 1280  # 80ms at 16kHz
 
         try:
-            while True:
-                audioData = self._clap_detector.getAudio()
+            recorder = PvRecorder(frame_length=frame_length)
+            recorder.start()
 
-                # Check if we have valid audio data
-                if audioData is None or len(audioData) == 0:
-                    time.sleep(1/60)
-                    continue
+            audio_buffer = np.array([], dtype=np.int16)
 
-                result = self._clap_detector.run(thresholdBias=threshold_bias, lowcut=lowcut, highcut=highcut, audioData=audioData)
-                result_length = len(result)
-                if result_length >= 2:
-                    logger.debug(f"Multiple claps detected! bias {threshold_bias}, lowcut {lowcut}, and highcut {highcut}")
-                    return result_length
-                time.sleep(1/60)
+            while recorder.is_recording:
+                pcm = recorder.read()
+
+                # Accumulate audio frames
+                audio_buffer = np.append(audio_buffer, pcm)
+
+                # Process when we have enough samples for openWakeWord
+                if len(audio_buffer) >= oww_chunk_size:
+                    # Take exactly oww_chunk_size samples
+                    audio_chunk = audio_buffer[:oww_chunk_size]
+                    audio_buffer = audio_buffer[oww_chunk_size:]
+
+                    # Get predictions from openWakeWord
+                    prediction = self._oww_model.predict(audio_chunk)
+
+                    # Check if wake word detected
+                    for wake_word, score in prediction.items():
+                        if score > 0.5:  # Detection threshold
+                            logger.info(f"Detected '{wake_word}' (confidence: {score:.2f})")
+                            recorder.stop()
+                            recorder.delete()
+                            return wake_word
 
         except Exception as e:
-            logger.error(f"Error in clap detection: {e}")
-            if self._clap_detector:
-                self._clap_detector.stop()
+            logger.error(f"Error in openWakeWord detection: {e}")
+            if recorder and recorder.is_recording:
+                recorder.stop()
+            if recorder:
+                recorder.delete()
             return None
 
     def listen_for_wake(self):
@@ -287,8 +320,8 @@ class Listener:
             result = self._listen_for_wake_phrase()
             if result:
                 return result
-            
-        return self._listen_for_claps()
+
+        return self._listen_for_oww()
 
     def listen_for_dream(self):
         logger.info("Listening for dream...")
@@ -335,9 +368,6 @@ class Listener:
 
         if self._porcupine:
             self._porcupine.delete()
-
-        if self._clap_detector:
-            self._clap_detector.stop()
 
     def __enter__(self):
         return self

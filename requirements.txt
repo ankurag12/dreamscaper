@@ -11,3 +11,4 @@ pyaudio
 together
 openai
 clap-detector
+openwakeword
