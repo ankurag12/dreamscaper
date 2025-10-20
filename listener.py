@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import queue
 import time
 from contextlib import contextmanager
@@ -36,14 +37,23 @@ class MicrophoneStream:
 
     @contextmanager
     def noalsaerr(self):
-        # This is a workaround to disable ALSA errors
-        asound = cdll.LoadLibrary('libasound.so')
-        asound.snd_lib_error_set_handler(c_error_handler)
-        yield
-        asound.snd_lib_error_set_handler(None)
+        """Disable ALSA errors on Linux only (ALSA doesn't exist on macOS)"""
+        # Only try to suppress ALSA errors on Linux
+        if platform.system() == 'Linux':
+            try:
+                asound = cdll.LoadLibrary('libasound.so')
+                asound.snd_lib_error_set_handler(c_error_handler)
+                yield
+                asound.snd_lib_error_set_handler(None)
+            except OSError:
+                # If ALSA library can't be loaded, just proceed without error suppression
+                yield
+        else:
+            # On macOS and other platforms, just proceed without ALSA error suppression
+            yield
 
     def __enter__(self: object) -> object:
-        # Disable ALSA errors
+        # Disable ALSA errors (Linux only)
         with self.noalsaerr():
             self._audio_interface = pyaudio.PyAudio()
 
@@ -136,13 +146,22 @@ class Listener:
     _wake_keywords = ['picovoice', 'bumblebee']
 
     def __init__(self):
-        
+
         # PicoVoice for Wake word detection
         pico_access_key = self._read_pico_access_key()
         self._porcupine = None
         self._porcupine_recorder = None
 
-        self._clap_detector = ClapDetector(inputDevice=-1, logLevel=10)
+        # Initialize clap detector with platform-appropriate device
+        # Raspberry Pi optimized settings:
+        # - exceptionOnOverflow=False: Prevents crashes when buffer overflows (common on RPi)
+        # - bufferLength=4096: Larger buffer reduces read frequency and overflow risk
+        self._clap_detector = ClapDetector(
+            inputDevice=self._get_input_device(),
+            logLevel=10,
+            exceptionOnOverflow=False,  # Don't crash on buffer overflow
+            bufferLength=4096           # Larger buffer for slower devices
+        )
         self._clap_detector.initAudio()
 
         try:
@@ -171,6 +190,37 @@ class Listener:
             interim_results=True,
             single_utterance=True
         )
+
+    @staticmethod
+    def _find_usb_mic():
+        """Find USB microphone device index by searching device names"""
+        p = pyaudio.PyAudio()
+        for i in range(p.get_device_count()):
+            info = p.get_device_info_by_index(i)
+            # Look for USB device with input channels
+            if 'USB' in info['name'] and info['maxInputChannels'] > 0:
+                p.terminate()
+                logger.info(f"Found USB microphone: {info['name']} at index {i}")
+                return i
+        p.terminate()
+        return -1  # Fall back to default if not found
+
+    @staticmethod
+    def _get_input_device():
+        """
+        Get the appropriate input device for the current platform.
+        On Raspberry Pi: Search for USB microphone
+        On other systems: Use system default (-1)
+        """
+        if platform.machine() in ['armv7l', 'aarch64', 'armv6l']:
+            # Raspberry Pi - search for USB mic
+            input_device = Listener._find_usb_mic()
+            if input_device == -1:
+                logger.warning("USB microphone not found, using system default")
+            return input_device
+        else:
+            # Mac or other systems - use default
+            return -1
 
     @staticmethod
     def _read_pico_access_key():
