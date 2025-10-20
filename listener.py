@@ -1,13 +1,16 @@
 import logging
 import os
 import queue
+import time
 from contextlib import contextmanager
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 
 import pvporcupine
 import pyaudio
+from clapDetector import ClapDetector
 from google.cloud import speech
 from pvrecorder import PvRecorder
+
 
 # Used in the context manager to disable ALSA errors
 c_error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)(
@@ -133,17 +136,25 @@ class Listener:
     _wake_keywords = ['picovoice', 'bumblebee']
 
     def __init__(self):
+        
         # PicoVoice for Wake word detection
         pico_access_key = self._read_pico_access_key()
+        self._porcupine = None
+        self._porcupine_recorder = None
 
-        self._porcupine = pvporcupine.create(
-            access_key=pico_access_key,
-            keywords=Listener._wake_keywords,
-            keyword_paths=["models/I-have-a-dream_en_raspberry-pi_v3_0_0.ppn"],
-            sensitivities=[0.3]
-        )
+        self._clap_detector = ClapDetector(inputDevice=-1, logLevel=10)
+        self._clap_detector.initAudio()
 
-        self._porcupine_recorder = PvRecorder(frame_length=self._porcupine.frame_length)
+        try:
+            self._porcupine = pvporcupine.create(
+                access_key=pico_access_key,
+                keywords=Listener._wake_keywords,
+                keyword_paths=["models/I-have-a-dream_en_raspberry-pi_v3_0_0.ppn"],
+                sensitivities=[0.3]
+            )
+            self._porcupine_recorder = PvRecorder(frame_length=self._porcupine.frame_length)
+        except Exception as e:
+            logger.error(f"Could not initialize Porcupine {e}")
 
         # Google Cloud Speech-to-Text for Dream detection
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = ".google-api-key.json"
@@ -163,11 +174,18 @@ class Listener:
 
     @staticmethod
     def _read_pico_access_key():
-        with open(".picovoice-key.txt", "r") as f:
-            access_key = f.read()
+        try:
+            with open(".picovoice-key.txt", "r") as f:
+                access_key = f.read()
+        except FileNotFoundError:
+            logger.error(f"Access key .picovoice-key.txt not found")
+            access_key = None
         return access_key
 
-    def listen_for_wake(self):
+    def _listen_for_wake_phrase(self):
+        if not self._porcupine_recorder:
+            return None
+
         self._porcupine_recorder.start()
         logger.info("Listening for wake phrase...")
 
@@ -184,7 +202,43 @@ class Listener:
 
         except Exception as e:
             logger.error(e)
-            self._porcupine_recorder.stop()
+            if self._porcupine_recorder:
+                self._porcupine_recorder.stop()
+
+        return None
+
+    def _listen_for_claps(self, threshold_bias=6000, lowcut=200, highcut=3200):
+        logger.info("Listening for claps...")
+
+        try:
+            while True:
+                audioData = self._clap_detector.getAudio()
+
+                # Check if we have valid audio data
+                if audioData is None or len(audioData) == 0:
+                    time.sleep(1/60)
+                    continue
+
+                result = self._clap_detector.run(thresholdBias=threshold_bias, lowcut=lowcut, highcut=highcut, audioData=audioData)
+                result_length = len(result)
+                if result_length >= 2:
+                    logger.debug(f"Multiple claps detected! bias {threshold_bias}, lowcut {lowcut}, and highcut {highcut}")
+                    return result_length
+                time.sleep(1/60)
+
+        except Exception as e:
+            logger.error(f"Error in clap detection: {e}")
+            if self._clap_detector:
+                self._clap_detector.stop()
+            return None
+
+    def listen_for_wake(self):
+        if self._porcupine and self._porcupine_recorder:
+            result = self._listen_for_wake_phrase()
+            if result:
+                return result
+            
+        return self._listen_for_claps()
 
     def listen_for_dream(self):
         logger.info("Listening for dream...")
@@ -224,11 +278,16 @@ class Listener:
                 yield full_transcript
 
     def shutdown(self):
-        if self._porcupine_recorder.is_recording:
+        if self._porcupine_recorder and self._porcupine_recorder.is_recording:
             self._porcupine_recorder.stop()
-        self._porcupine_recorder.delete()
+        if self._porcupine_recorder:
+            self._porcupine_recorder.delete()
 
-        self._porcupine.delete()
+        if self._porcupine:
+            self._porcupine.delete()
+
+        if self._clap_detector:
+            self._clap_detector.stop()
 
     def __enter__(self):
         return self

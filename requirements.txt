@@ -10,3 +10,4 @@ google-cloud-speech
 pyaudio
 together
 openai
+clap-detector
