@@ -270,7 +270,10 @@ class Listener:
         if not self._oww_model:
             return None
 
-        logger.info("Listening for 'hey jarvis' using openWakeWord...")
+        # Reset model state to clear any cached audio from previous detections
+        self._oww_model.reset()
+
+        logger.info(f"Listening for 'hey jarvis' using openWakeWord... (last detection: {self._oww_last_detection_time})")
 
         # openWakeWord needs 1280 samples per chunk (80ms at 16kHz)
         # PvRecorder frame_length will be 512 by default, so we'll accumulate frames
@@ -307,13 +310,15 @@ class Listener:
 
                         if score > 0.5:  # Detection threshold
                             current_time = time.time()
+                            time_since_last = current_time - self._oww_last_detection_time
 
                             # Check debounce - ignore if detected recently
-                            if current_time - self._oww_last_detection_time < debounce_time:
-                                logger.debug(f"Ignoring duplicate detection (debounce)")
+                            if time_since_last < debounce_time:
+                                logger.info(f"Ignoring duplicate detection (debounce: {time_since_last:.1f}s < {debounce_time}s)")
                                 continue
 
                             logger.info(f"Detected '{wake_word}' (confidence: {score:.2f})")
+                            logger.info(f"Setting debounce timer to {current_time}")
                             self._oww_last_detection_time = current_time  # Update debounce timer
                             recorder.stop()
                             recorder.delete()
