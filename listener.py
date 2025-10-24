@@ -166,8 +166,7 @@ class Listener:
                 wakeword_models=["hey_jarvis"],
                 inference_framework='onnx'  # 'onnx' (recommended) or 'tflite'
             )
-            self._oww_audio = None
-            self._oww_stream = None
+            self._oww_last_detection_time = 0  # For debouncing across calls
             logger.info("openWakeWord initialized successfully with 'hey jarvis' model")
         except Exception as e:
             logger.error(f"Could not initialize openWakeWord: {e}")
@@ -277,6 +276,7 @@ class Listener:
         # PvRecorder frame_length will be 512 by default, so we'll accumulate frames
         frame_length = 512
         oww_chunk_size = 1280  # 80ms at 16kHz
+        debounce_time = 5.0  # Ignore detections for 5 seconds after first detection
 
         try:
             recorder = PvRecorder(frame_length=frame_length)
@@ -301,8 +301,20 @@ class Listener:
 
                     # Check if wake word detected
                     for wake_word, score in prediction.items():
+                        # Log scores periodically for debugging (every 100 chunks)
+                        if np.random.rand() < 0.01:  # ~1% of the time
+                            logger.debug(f"'{wake_word}' score: {score:.3f}")
+
                         if score > 0.5:  # Detection threshold
+                            current_time = time.time()
+
+                            # Check debounce - ignore if detected recently
+                            if current_time - self._oww_last_detection_time < debounce_time:
+                                logger.debug(f"Ignoring duplicate detection (debounce)")
+                                continue
+
                             logger.info(f"Detected '{wake_word}' (confidence: {score:.2f})")
+                            self._oww_last_detection_time = current_time  # Update debounce timer
                             recorder.stop()
                             recorder.delete()
                             return wake_word
