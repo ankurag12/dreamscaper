@@ -64,8 +64,9 @@ class Dreamer:
             return
 
         if not save_as:
-            save_as = os.path.join("dreams", f"{text[:256]}.jpeg")
+            save_as = os.path.join("dreams", f"{text}.jpeg")
 
+        save_as = save_as[:-5][:250] + ".jpeg"
         os.makedirs(os.path.dirname(save_as), exist_ok=True)
         image.save(save_as)
         logger.info(f"Image saved as {save_as}")
