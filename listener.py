@@ -354,28 +354,32 @@ class Listener:
 
             finalized_transcript = str()
 
-            for response in responses:
-                logger.info(f"Response from Google Cloud:\n{response}")
-                if not response.results:
-                    if response.speech_event_type == speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
-                        break
-                    continue
+            try:
+                for response in responses:
+                    logger.info(f"Response from Google Cloud:\n{response}")
+                    if not response.results:
+                        if response.speech_event_type == speech.StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE:
+                            break
+                        continue
 
-                if not response.results[0].alternatives:
-                    continue
+                    if not response.results[0].alternatives:
+                        continue
 
-                current_transcript = str()
-                # We take transcription of the top alternative from all the results as some chunks might never be deemed "is_final".
-                for result in response.results:
-                    this_transcript = result.alternatives[0].transcript
+                    current_transcript = str()
+                    # We take transcription of the top alternative from all the results as some chunks might never be deemed "is_final".
+                    for result in response.results:
+                        this_transcript = result.alternatives[0].transcript
 
-                    if result.is_final:
-                        finalized_transcript += this_transcript
-                    else:
-                        current_transcript += this_transcript
+                        if result.is_final:
+                            finalized_transcript += this_transcript
+                        else:
+                            current_transcript += this_transcript
 
-                full_transcript = finalized_transcript + " " + current_transcript
-                yield full_transcript
+                    full_transcript = finalized_transcript + " " + current_transcript
+                    yield full_transcript
+            except Exception as e:
+                logger.error(f"Error caught:\n{e}")
+                yield ""
 
     def shutdown(self):
         if self._porcupine_recorder and self._porcupine_recorder.is_recording:
